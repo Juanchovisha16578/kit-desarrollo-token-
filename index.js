@@ -37,7 +37,7 @@ app.post("/register", (req, res) => {
     // Validación
     
         if(!username || !password || !name){
-            return removeEventListener.status(401).send({error: "Faltan datos para ingreso: username, password, name", bodyRecibido: body});
+            return res.status(401).send({error: "Faltan datos para ingreso: username, password, name", bodyRecibido: body});
         }
     
     // Encriptar contraseña
@@ -96,6 +96,7 @@ app.post("/login", (req, res) => {
 
 // Verificación del token
 const authenticateToken = (req, res, next) => {
+    
     // 1. Obtener el header authorization
     const authHeader = req.headers["authorization"]
     const token = authHeader && authHeader.split(" ")[1]
