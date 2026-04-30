@@ -1,4 +1,4 @@
-const sqlite3 = require("sqlite").verbose();
+const sqlite3 = require("sqlite3").verbose();
 
 //Crea una base de datos nueva 
 const db = new sqlite3.Database("./jwt.db", (err) => {
