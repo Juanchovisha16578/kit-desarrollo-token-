@@ -30,4 +30,21 @@ db.serialize(() => {
         )`
     )
 })
+
+db.all("PRAGMA table_info(usuarios)", (err, columns) => {
+    if (err) return console.error(err);
+
+    // Revisamos si alguna columna se llama 'role'
+    const existeRole = columns.some(col => col.name === 'role');
+
+    if (!existeRole) {
+        db.run("ALTER TABLE usuarios ADD COLUMN role TEXT", (err) => {
+            if (err) console.error("Error al añadir columna:", err);
+            else console.log("Columna 'role' añadida con éxito.");
+        });
+    } else {
+        console.log("La columna 'role' ya existe, saltando paso.");
+    }
+});
+
 module.exports = db

@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json()) // Parsea JSON del body
 //La libreria urlencoded permite parsear del html al JSON
 app.use(express.urlencoded({ extended: true }))
- 
+
 app.use((req, res, next) => {
     //Cuando se conecte al servidor va a recibir el body
     console.log("Body recibido:", req.body)
@@ -128,7 +128,7 @@ app.get("/private", authenticateToken, (req, res) => {
 
 //=============================== REGISTRO DE PRODUCTOS ===============================
 
-app.post("/products", (req, res) => {
+app.post("/private/products", (req, res) => {
     const body = req.body || {}
     const nombreProducto = body.nombreProducto
     const cantidad = body.cantidad
@@ -138,6 +138,10 @@ app.post("/products", (req, res) => {
         if(!nombreProducto || !cantidad){
             return res.status(401).send({error: "Asegurate de haber registrado todos los datos del producto", bodyRecibido: body});
         }
+
+        const stmt = db.prepare(
+            "INSERT INTO producto (nombreProducto, cantidad) VALUES (?, ?)"    
+        )
 })
 
 // VOY AQUI !!
@@ -153,48 +157,37 @@ app.get("/inventario/publico", (req, res) => {
 
 
 // Ruta Privada: Solo personal autenticado puede registrar entrada/salida de granos
-app.post("/inventario/actualizar", (req, res) => {
-    // 1. Log para ver qué llegó
-    console.log("Headers:", req.headers['content-type']);
-    console.log("Body:", req.body);
+app.put("/private/products/update", (req, res) => {
 
-    // 2. Validación manual para atrapar el error
-    if (!req.body || Object.keys(req.body).length === 0) {
-        return res.status(400).send({ 
-            error: "Bad Request: El cuerpo está vacío. Revisa el Content-Type o el formato JSON." 
-        });
+    const body = req.body || {}
+    const nombreProducto = body.nombreProducto
+    const cantidad = body.cantidad
+    
+    if(!nombreProducto || !cantidad){
+        return res.status(401).send({error: "Asegurate de haber registrado todos los datos del producto", bodyRecibido: body});
     }
+
     try {
-        // Validación del Token 
-        const authHeader = req.headers.authorization;
-        if (!authHeader) return res.status(401).send({ error: "Falta cabecera de autorización" });
-
-        const token = authHeader.split(" ")[1];
-        const payload = jwt.verify(token, secret);
-
-        // Validación de seguridad para el body
-        if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).send({ error: "El cuerpo de la petición está vacío" });
-        }
-
-        // Verificamos expiración (JWT maneja exp en segundos, no milisegundos)
-        if (Math.floor(Date.now() / 1000) > payload.exp) {
-            return res.status(401).send({ error: "Token expirado" });
-        }
-
         // Lógica de Inventario
-        const { producto, cantidad, tipo } = req.body; 
-        console.log(`Usuario ${payload.name} actualizó ${producto} en el inventario.`);
+        console.log(`Usuario ${users.name} actualizó ${producto} en el inventario.`);
 
-        res.send({ 
-            mensaje: "Inventario actualizado correctamente",
-            usuario: payload.name,
-            detalle: `Se registraron ${cantidad}kg de ${producto}`
+        const stmt = db.prepare(
+            "UPDATE producto SET nombreProducto = ?, cantidad = ? WHERE id = ?"
+        );
+    
+        // Respuesta de éxito informando quién actualizó
+        res.status(200).send({
+            mensaje: `Inventario actualizado correctamente`,
+            actualizadoPor: users.name,
+            datosNuevos: {
+                nombreProducto,
+                cantidad
+            }
         });
-
     } catch (error) {
-        res.status(401).send({ error: "Acceso denegado: " + error.message });
+        res.status(500).send({ error: "Error en la base de datos" });
     }
+
 });
 
 // Mensaje inicio servidor
