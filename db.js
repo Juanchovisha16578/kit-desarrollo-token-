@@ -19,4 +19,14 @@ db.serialize(() => {
     )
 })
 
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS producto (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombreProducto TEXT NOT NULL,
+            cantidad INT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP      
+        )`
+    )
+})
+
 module.exports = db

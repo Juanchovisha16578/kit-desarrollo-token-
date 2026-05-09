@@ -33,19 +33,18 @@ app.post("/register", (req, res) => {
     const username = body.username
     const password = body.password
     const name = body.name
-    const role = body.role
 
     // Validación
     
-        if(!username || !password || !name || !role){
-            return res.status(401).send({error: "Faltan datos para ingreso: username, password, name y role", bodyRecibido: body});
+        if(!username || !password || !name){
+            return res.status(401).send({error: "Faltan datos para ingreso: username, password, name", bodyRecibido: body});
         }
     
     // Encriptar contraseña
         bcrypt.hash(password, 10, (err, hashedPassword) => {
             if (err) return res.status(500).send({error: err.message})
                 const stmt = db.prepare(
-                    "INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)"    
+                    "INSERT INTO users (username, password, name) VALUES (?, ?, ?)"    
                 )
                 //Esto es por si el usuario vuelve a crear el mismo usuario
                 stmt.run(username, hashedPassword, name, function(err) {
@@ -65,7 +64,7 @@ app.post("/register", (req, res) => {
 
 //=============================== LOGIN ===============================
 app.post("/login", (req, res) => {
-    const { username, password, role } = req.body
+    const { username, password } = req.body
 
     //1. Buscar usuario en la base de datos 
 
@@ -85,7 +84,6 @@ app.post("/login", (req, res) => {
                 sub: user.id,
                 name: user.name, 
                 username: user.username,
-                role: user.role,
                 exp: Math.floor(Date.now() / 1000) + (60 * 60) // Expira en 1 hora 
             }, secret)
 
@@ -123,7 +121,7 @@ const authenticateToken = (req, res, next) => {
 //=============================== RUTAS ===============================
 
 app.get("/private", authenticateToken, (req, res) => {
-    res.send(`Servidor de Administrador - Bienvenido ${req.user.role}`);
+    res.send(`Servidor de Administrador - Bienvenido ${req.user.name}`);
 })
 
 //=============================== REGISTRO DE PRODUCTOS ===============================
@@ -135,13 +133,25 @@ app.post("/private/products", (req, res) => {
 
     // Validación
     
-        if(!nombreProducto || !cantidad){
-            return res.status(401).send({error: "Asegurate de haber registrado todos los datos del producto", bodyRecibido: body});
-        }
+    if(!nombreProducto || !cantidad){
+        return res.status(401).send({error: "Asegurate de haber registrado todos los datos del producto", bodyRecibido: body});
+    }
 
-        const stmt = db.prepare(
-            "INSERT INTO producto (nombreProducto, cantidad) VALUES (?, ?)"    
-        )
+    // 1. Preparar la sentencia
+    const stmt = db.prepare(
+        "INSERT INTO producto (nombreProducto, cantidad) VALUES (?, ?)"    
+    )
+
+    // 2. LA PARTE QUE FALTA: Ejecutarla con los datos reales
+    stmt.run(nombreProducto, cantidad, function(err) {
+        if (err) {
+            return console.error("Error al insertar:", err.message);
+        }
+        console.log(`Producto registrado con el ID: ${this.lastID}`);
+    });
+
+    // 3. Opcional: Cerrar la sentencia preparada para liberar memoria
+    stmt.finalize();
 })
 
 // VOY AQUI !!
