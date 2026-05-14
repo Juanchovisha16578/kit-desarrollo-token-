@@ -126,35 +126,56 @@ app.get("/private", authenticateToken, (req, res) => {
 
 //=============================== REGISTRO DE PRODUCTOS ===============================
 
-app.post("/private/products", (req, res) => {
-    const body = req.body || {}
-    const nombreProducto = body.nombreProducto
-    const cantidad = body.cantidad
-
-    // Validación
+app.post("/private/products/insert", (req, res) => {
     
-    if(!nombreProducto || !cantidad){
-        return res.status(401).send({error: "Asegurate de haber registrado todos los datos del producto", bodyRecibido: body});
+    try {
+
+        const { nombreProducto, cantidad, idUsuario } = req.body; // Datos que viene por parte del cliente 
+        
+        // 1. Validación
+        if(!nombreProducto || !cantidad || !idUsuario){
+            return res.status(401).send({error: "Asegurate de enviar nombre, cantidad e idUsuario para registrar el producto", bodyRecibido: body});
+        }
+
+        // 2. Buscamos el nombre del usuario en la tabla 'usuarios'
+        db.get("SELECT username FROM users WHERE id = ?", [idUsuario], (err, row) => {
+        if (err || !row) {
+            return res.status(404).send({ error: "Usuario no encontrado" });
+        }
+
+        const nombreAdmin = row.username; // Aquí ya tienes el nombre traído de la DB
+
+        // 3. Preparar la sentencia
+        const stmt = db.prepare(
+            "INSERT INTO producto (nombreProducto, cantidad) VALUES (?, ?)"    
+        )
+
+        // 4. LA PARTE QUE FALTA: Ejecutarla con los datos reales
+        stmt.run(nombreProducto, cantidad, function(err) {
+            if (err) {
+                return console.error("Error al insertar:", err.message);
+            }
+            console.log(`Producto registrado con el ID: ${this.lastID}`);
+
+        // 5. Respuesta de éxito
+            res.status(201).send({
+                mensaje: "Producto registrado exitosamente en el inventario",
+                idGenerado: this.lastID, // SQLite nos devuelve el ID que se creó
+                registradoPor: nombreAdmin,
+                datos: {
+                    nombreProducto,
+                    cantidad
+                }
+            });
+        });
+        // 3. Opcional: Cerrar la sentencia preparada para liberar memoria
+        stmt.finalize();
+    });
+    } catch (error) {
+        res.status(500).send({ error: error.message });
     }
 
-    // 1. Preparar la sentencia
-    const stmt = db.prepare(
-        "INSERT INTO producto (nombreProducto, cantidad) VALUES (?, ?)"    
-    )
-
-    // 2. LA PARTE QUE FALTA: Ejecutarla con los datos reales
-    stmt.run(nombreProducto, cantidad, function(err) {
-        if (err) {
-            return console.error("Error al insertar:", err.message);
-        }
-        console.log(`Producto registrado con el ID: ${this.lastID}`);
     });
-
-    // 3. Opcional: Cerrar la sentencia preparada para liberar memoria
-    stmt.finalize();
-})
-
-// VOY AQUI !!
 
 // Ruta Pública: Cualquiera puede ver qué verduras y granos hay
 app.get("/inventario/publico", (req, res) => {
@@ -167,7 +188,7 @@ app.get("/inventario/publico", (req, res) => {
 
 
 // Ruta Privada: Solo personal autenticado puede registrar entrada/salida de granos
-app.put("/private/products/update", (req, res) => {
+app.put("/private/products/update/:id", (req, res) => {
 
     const body = req.body || {}
     const nombreProducto = body.nombreProducto
@@ -178,24 +199,39 @@ app.put("/private/products/update", (req, res) => {
     }
 
     try {
-        // Lógica de Inventario
-        console.log(`Usuario ${users.name} actualizó ${producto} en el inventario.`);
+        const idProducto = req.params.id; // Obtener el id de la url 
+        const { nombreProducto, cantidad, idUsuario } = req.body; // Datos que viene por parte del cliente 
+        
+        // 1. Buscamos el nombre del usuario en la tabla 'usuarios'
+        db.get("SELECT username FROM users WHERE id = ?", [idUsuario], (err, row) => {
+        if (err || !row) {
+            return res.status(404).send({ error: "Usuario no encontrado" });
+        }
 
-        const stmt = db.prepare(
-            "UPDATE producto SET nombreProducto = ?, cantidad = ? WHERE id = ?"
-        );
-    
-        // Respuesta de éxito informando quién actualizó
-        res.status(200).send({
-            mensaje: `Inventario actualizado correctamente`,
-            actualizadoPor: users.name,
-            datosNuevos: {
-                nombreProducto,
-                cantidad
+        const nombreAdmin = row.username; // Aquí ya tienes el nombre traído de la DB
+
+        console.log(`Usuario ${nombreAdmin} actualizando el producto ID: ${idProducto}`);
+
+        // 2. Ahora que tenemos el nombre, hacemos el UPDATE del producto
+        const stmt = db.prepare("UPDATE producto SET nombreProducto = ?, cantidad = ? WHERE id = ?");
+        
+        stmt.run(nombreProducto, cantidad, idProducto, function(updateErr) {
+            if (updateErr) return res.status(500).send({ error: updateErr.message });
+
+            // Verificamos si realmente se editó algo
+            if (this.changes === 0) {
+                return res.status(404).send({ error: "No se encontró el producto con ese ID" });
             }
+            res.send({
+                mensaje: "Inventario actualizado",
+                actualizadoPor: nombreAdmin, // El nombre que sacamos de la tabla usuarios
+                datos: { nombreProducto, cantidad }
+            });
         });
+        stmt.finalize(); // Cerramos el statement para liberar memoria
+    });
     } catch (error) {
-        res.status(500).send({ error: "Error en la base de datos" });
+        res.status(500).send({ error: error.message });
     }
 
 });
