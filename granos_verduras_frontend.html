@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Granos y Verduras La Esperanza</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --verde: #2E7D32;
+    --verde-claro: #DFF5E1;
+    --verde-mid: #4CAF50;
+    --cafe: #5D4037;
+    --cafe-light: #EFEBE9;
+    --texto: #1B1B1B;
+    --texto-muted: #6B6B6B;
+    --borde: #D6D6D6;
+    --rojo: #C62828;
+    --fondo: #F5F7F2;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+  nav {
+    background: var(--verde); padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; position: sticky; top: 0; z-index: 100;
+  }
+
+  .nav-brand { font-family: 'Fraunces', serif; color: white; font-size: 1.2rem; font-weight: 600; }
+
+  .nav-links { display: flex; gap: 8px; align-items: center; }
+
+  .nav-btn {
+    background: transparent; border: 1.5px solid rgba(255,255,255,0.4);
+    color: white; padding: 6px 16px; border-radius: 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.15); }
+  .nav-btn.danger:hover { background: rgba(255,100,100,0.2); }
+  #nav-user { color: rgba(255,255,255,0.8); font-size: 0.85rem; }
+
+  .page { display: none; padding: 2rem; max-width: 960px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  .auth-wrap { min-height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+
+  .auth-card {
+    background: white; border-radius: 16px; padding: 2.5rem;
+    width: 100%; max-width: 420px; border: 1px solid var(--borde);
+  }
+  .auth-card h2 { font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--verde); }
+  .auth-card p.sub { font-size: 0.875rem; color: var(--texto-muted); margin-bottom: 1.5rem; }
+
+  .form-group { margin-bottom: 1rem; }
+
+  label { display: block; font-size: 0.825rem; font-weight: 500; color: var(--texto-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  input, select, textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--borde);
+    border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    color: var(--texto); background: white; transition: border-color 0.2s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--verde-mid); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+    border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--verde); color: white; width: 100%; justify-content: center; padding: 12px; }
+  .btn-primary:hover { background: #1B5E20; }
+  .btn-secondary { background: var(--verde-claro); color: var(--verde); border: 1.5px solid #A5D6A7; }
+  .btn-secondary:hover { background: #C8E6C9; }
+  .btn-danger { background: #FFEBEE; color: var(--rojo); border: 1.5px solid #FFCDD2; }
+  .btn-danger:hover { background: #FFCDD2; }
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+  .alert { padding: 10px 14px; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1rem; display: none; }
+  .alert.error { background: #FFEBEE; color: var(--rojo); border: 1px solid #FFCDD2; }
+  .alert.success { background: var(--verde-claro); color: var(--verde); border: 1px solid #A5D6A7; }
+  .alert.show { display: block; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .page-header h1 { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 600; }
+  .page-header p { font-size: 0.875rem; color: var(--texto-muted); margin-top: 2px; }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+
+  .stat-card { background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid var(--borde); }
+  .stat-card .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-muted); margin-bottom: 6px; }
+  .stat-card .stat-value { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 600; color: var(--verde); }
+
+  .table-wrap { background: white; border-radius: 12px; border: 1px solid var(--borde); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--verde-claro); color: var(--verde); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; padding: 10px 16px; text-align: left; }
+  td { padding: 12px 16px; border-top: 1px solid var(--fondo); font-size: 0.9rem; vertical-align: middle; }
+  tr:hover td { background: var(--fondo); }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; background: var(--verde-claro); color: var(--verde); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 16px; padding: 2rem; width: 100%; max-width: 440px; border: 1px solid var(--borde); }
+  .modal h3 { font-family: 'Fraunces', serif; font-size: 1.2rem; color: var(--verde); margin-bottom: 1.25rem; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+  .inv-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .inv-section { background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid var(--borde); }
+  .inv-section h3 { font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-muted); margin-bottom: 1rem; font-weight: 500; }
+  .inv-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--fondo); font-size: 0.9rem; }
+  .inv-item:last-child { border-bottom: none; }
+  .inv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--verde-mid); flex-shrink: 0; }
+
+  .private-banner { background: var(--verde); color: white; border-radius: 12px; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .private-banner .icon { font-size: 2rem; }
+  .private-banner h2 { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 600; }
+  .private-banner p { font-size: 0.875rem; opacity: 0.85; margin-top: 2px; }
+
+  .switch-link { text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--texto-muted); }
+  .switch-link a { color: var(--verde); cursor: pointer; text-decoration: underline; }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--texto-muted); font-size: 0.9rem; }
+  .empty-state .emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">🌿 Granos y Verduras La Esperanza</span>
+  <div class="nav-links">
+    <span id="nav-user" style="display:none"></span>
+    <button class="nav-btn" onclick="showPage('inventario-pub')">Inventario público</button>
+    <button class="nav-btn" id="btn-nav-private" style="display:none" onclick="showPage('private')">Zona privada</button>
+    <button class="nav-btn" id="btn-nav-productos" style="display:none" onclick="showPage('productos')">Productos</button>
+    <button class="nav-btn" id="btn-nav-login" onclick="showPage('login')">Iniciar sesión</button>
+    <button class="nav-btn" id="btn-nav-register" onclick="showPage('register')">Registrarse</button>
+    <button class="nav-btn danger" id="btn-nav-logout" style="display:none" onclick="logout()">Salir</button>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div id="page-login" class="page active">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Bienvenido</h2>
+      <p class="sub">Inicia sesión para acceder al panel de administración</p>
+      <div id="login-alert" class="alert"></div>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="login-username" placeholder="tu_usuario" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" onclick="login()">Iniciar sesión</button>
+      <div class="switch-link">¿No tienes cuenta? <a onclick="showPage('register')">Regístrate aquí</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="page-register" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Crear cuenta</h2>
+      <p class="sub">Regístrate para administrar el inventario</p>
+      <div id="register-alert" class="alert"></div>
+      <div class="form-group">
+        <label>Nombre completo</label>
+        <input type="text" id="reg-name" placeholder="Nombre Apellido" />
+      </div>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="reg-username" placeholder="tu_usuario" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" onclick="register()">Crear cuenta</button>
+      <div class="switch-link">¿Ya tienes cuenta? <a onclick="showPage('login')">Inicia sesión</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- INVENTARIO PÚBLICO -->
+<div id="page-inventario-pub" class="page">
+  <div class="page-header">
+    <div>
+      <h1>Inventario público</h1>
+      <p>Disponible para todos sin necesidad de iniciar sesión</p>
+    </div>
+    <button class="btn btn-secondary" onclick="cargarInventarioPublico()">↻ Actualizar</button>
+  </div>
+  <div class="inv-grid" id="inv-publico-grid">
+    <div class="empty-state">
+      <div class="emoji">🌾</div>
+      <p>Cargando inventario...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ZONA PRIVADA -->
+<div id="page-private" class="page">
+  <div class="private-banner">
+    <div class="icon">🔒</div>
+    <div>
+      <h2 id="private-welcome">Zona privada</h2>
+      <p>Acceso restringido al personal autenticado</p>
+    </div>
+  </div>
+  <div class="cards-grid">
+    <div class="stat-card">
+      <div class="stat-label">Estado del token</div>
+      <div class="stat-value" style="font-size:1.1rem; color: var(--verde-mid)">✓ Activo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Acceso</div>
+      <div class="stat-value" style="font-size:1.1rem;">Administrador</div>
+    </div>
+  </div>
+  <div style="background:white; border-radius:12px; border:1px solid var(--borde); padding:1.25rem;">
+    <p style="font-size:0.9rem; color:var(--texto-muted); margin-bottom:0.5rem;">Token JWT activo:</p>
+    <code id="token-display" style="font-size:0.75rem; word-break:break-all; color:var(--cafe); background:var(--cafe-light); display:block; padding:10px; border-radius:8px; line-height:1.6;">
+  </div>
+</div>
+
+<!-- PRODUCTOS -->
+<div id="page-productos" class="page">
+  <div class="page-header">
+    <div>
+      <h1>Gestión de productos</h1>
+      <p>Registra y actualiza el inventario privado</p>
+    </div>
+    <button class="btn btn-secondary" onclick="abrirModalProducto()">+ Nuevo producto</button>
+  </div>
+  <div id="productos-alert" class="alert"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre del producto</th>
+          <th>Cantidad</th>
+          <th>Registrado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="productos-tbody">
+        <tr><td colspan="5"><div class="empty-state"><div class="emoji">📦</div><p>No hay productos registrados aún</p></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div id="modal-producto" class="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-titulo">Nuevo producto</h3>
+    <div id="modal-alert" class="alert"></div>
+    <div class="form-group">
+      <label>Nombre del producto</label>
+      <input type="text" id="prod-nombre" placeholder="Ej: Arroz Diana 500g" />
+    </div>
+    <div class="form-group">
+      <label>Cantidad</label>
+      <input type="number" id="prod-cantidad" placeholder="0" min="0" />
+    </div>
+    <input type="hidden" id="prod-id" />
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-secondary btn-sm" onclick="guardarProducto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:3000';
+  let token = localStorage.getItem('token') || null;
+  let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+  let productos = [];
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    if (name === 'inventario-pub') cargarInventarioPublico();
+    if (name === 'private') cargarPrivada();
+    if (name === 'productos') cargarProductos();
+  }
+
+  function updateNav() {
+    const loggedIn = !!token;
+    document.getElementById('btn-nav-login').style.display = loggedIn ? 'none' : '';
+    document.getElementById('btn-nav-register').style.display = loggedIn ? 'none' : '';
+    document.getElementById('btn-nav-logout').style.display = loggedIn ? '' : 'none';
+    document.getElementById('btn-nav-private').style.display = loggedIn ? '' : 'none';
+    document.getElementById('btn-nav-productos').style.display = loggedIn ? '' : 'none';
+    const navUser = document.getElementById('nav-user');
+    if (loggedIn && currentUser) {
+      navUser.style.display = '';
+      navUser.textContent = '👤 ' + currentUser.name;
+    } else {
+      navUser.style.display = 'none';
+    }
+  }
+
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'alert ' + type + ' show';
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  async function login() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!username || !password) return showAlert('login-alert', 'Completa todos los campos', 'error');
+    try {
+      const res = await fetch(API + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return showAlert('login-alert', data.error || 'Error al iniciar sesión', 'error');
+      token = data.token;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      currentUser = { name: payload.name, username: payload.username, id: payload.sub };
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      updateNav();
+      showPage('private');
+    } catch (e) {
+      showAlert('login-alert', 'No se pudo conectar al servidor. ¿Está corriendo en localhost:3000?', 'error');
+    }
+  }
+
+  async function register() {
+    const name = document.getElementById('reg-name').value.trim();
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    if (!name || !username || !password) return showAlert('register-alert', 'Completa todos los campos', 'error');
+    try {
+      const res = await fetch(API + '/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return showAlert('register-alert', data.error || 'Error al registrarse', 'error');
+      showAlert('register-alert', '¡Cuenta creada! Ahora inicia sesión', 'success');
+      setTimeout(() => showPage('login'), 1500);
+    } catch (e) {
+      showAlert('register-alert', 'No se pudo conectar al servidor', 'error');
+    }
+  }
+
+  function logout() {
+    token = null;
+    currentUser = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    updateNav();
+    showPage('login');
+  }
+
+  // ✅ Ahora carga los productos reales de la base de datos
+  async function cargarInventarioPublico() {
+    const grid = document.getElementById('inv-publico-grid');
+    grid.innerHTML = '<div class="empty-state"><p>Cargando...</p></div>';
+    try {
+      const res = await fetch(API + '/inventario/publico');
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><div class="emoji">🌾</div><p>No hay productos en el inventario aún</p></div>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'inv-section';
+      div.innerHTML = '<h3>🌿 Productos disponibles</h3>' +
+        data.map(p => `
+          <div class="inv-item">
+            <span class="inv-dot"></span>
+            <span style="flex:1"><strong>${p.nombreProducto}</strong></span>
+            <span class="badge">Cantidad: ${p.cantidad}</span>
+          </div>
+        `).join('');
+      grid.appendChild(div);
+    } catch (e) {
+      grid.innerHTML = '<div class="empty-state"><div class="emoji">⚠️</div><p>No se pudo cargar el inventario. ¿El servidor está activo?</p></div>';
+    }
+  }
+
+  async function cargarPrivada() {
+    if (!token) return showPage('login');
+    try {
+      const res = await fetch(API + '/private', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const text = await res.text();
+      document.getElementById('private-welcome').textContent = text;
+    } catch (e) {}
+    document.getElementById('token-display').textContent = token;
+  }
+
+  async function cargarProductos() {
+    if (!token) return showPage('login');
+    try {
+      const res = await fetch(API + '/private/products', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        return showAlert('productos-alert', data.error || 'Error al cargar productos', 'error');
+      }
+      productos = await res.json();
+      renderProductos();
+    } catch (e) {
+      showAlert('productos-alert', 'No se pudo conectar al servidor', 'error');
+    }
+  }
+
+  function renderProductos() {
+    const tbody = document.getElementById('productos-tbody');
+    if (productos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="emoji">📦</div><p>No hay productos registrados aún. Crea el primero.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = productos.map(p => `
+      <tr>
+        <td><span class="badge">#${p.id}</span></td>
+        <td><strong>${p.nombreProducto}</strong></td>
+        <td>${p.cantidad}</td>
+        <td style="color:var(--texto-muted); font-size:0.8rem">${p.created_at || '-'}</td>
+        <td style="display:flex; gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalEditar(${p.id})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.id}, '${p.nombreProducto}')">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function eliminarProducto(id, nombre) {
+    if (!confirm(`¿Seguro que deseas eliminar "${nombre}"?`)) return;
+    try {
+      const res = await fetch(API + '/private/products/delete/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (!res.ok) return showAlert('productos-alert', data.error || 'Error al eliminar', 'error');
+      productos = productos.filter(p => p.id !== id);
+      renderProductos();
+      showAlert('productos-alert', `✓ Producto "${nombre}" eliminado`, 'success');
+    } catch (e) {
+      showAlert('productos-alert', 'Error de conexión con el servidor', 'error');
+    }
+  }
+
+  function abrirModalProducto() {
+    document.getElementById('modal-titulo').textContent = 'Nuevo producto';
+    document.getElementById('prod-nombre').value = '';
+    document.getElementById('prod-cantidad').value = '';
+    document.getElementById('prod-id').value = '';
+    document.getElementById('modal-alert').className = 'alert';
+    document.getElementById('modal-producto').classList.add('show');
+  }
+
+  function abrirModalEditar(id) {
+    const p = productos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('modal-titulo').textContent = 'Editar producto';
+    document.getElementById('prod-nombre').value = p.nombreProducto;
+    document.getElementById('prod-cantidad').value = p.cantidad;
+    document.getElementById('prod-id').value = id;
+    document.getElementById('modal-alert').className = 'alert';
+    document.getElementById('modal-producto').classList.add('show');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-producto').classList.remove('show');
+  }
+
+  async function guardarProducto() {
+    const nombre = document.getElementById('prod-nombre').value.trim();
+    const cantidad = document.getElementById('prod-cantidad').value;
+    const id = document.getElementById('prod-id').value;
+    if (!nombre || !cantidad) return showAlert('modal-alert', 'Completa nombre y cantidad', 'error');
+    if (!currentUser) return showAlert('modal-alert', 'No has iniciado sesión', 'error');
+
+    if (!id) {
+      try {
+        const res = await fetch(API + '/private/products/insert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ nombreProducto: nombre, cantidad: parseInt(cantidad)})
+        });
+        const data = await res.json();
+        if (!res.ok) return showAlert('modal-alert', data.error || 'Error al guardar', 'error');
+        cerrarModal();
+        await cargarProductos();
+        showAlert('productos-alert', `✓ Producto "${nombre}" registrado exitosamente`, 'success');
+      } catch (e) {
+        showAlert('modal-alert', 'Error de conexión con el servidor', 'error');
+      }
+    } else {
+      try {
+        const res = await fetch(API + '/private/products/update/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ nombreProducto: nombre, cantidad: parseInt(cantidad)})
+        });
+        const data = await res.json();
+        if (!res.ok) return showAlert('modal-alert', data.error || 'Error al actualizar', 'error');
+        cerrarModal();
+        await cargarProductos();
+        showAlert('productos-alert', `✓ Producto "${nombre}" actualizado`, 'success');
+      } catch (e) {
+        showAlert('modal-alert', 'Error de conexión con el servidor', 'error');
+      }
+    }
+  }
+
+  document.getElementById('modal-producto').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+  });
+
+  updateNav();
+  cargarInventarioPublico();
+</script>
+</body>
+</html>
+ </code>
